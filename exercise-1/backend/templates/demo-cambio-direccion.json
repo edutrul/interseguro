@@ -1,0 +1,20 @@
+{
+  "productCode": "DemoVida",
+  "endorsementType": "CambioDireccion",
+  "version": 1,
+  "outputSkeleton": {
+    "policyNumber": "{{policyNumber|string}}",
+    "productEntity": { "description": "{{producto|string}}" },
+    "eventEntity": {
+      "description": "RegistrarEndoso",
+      "dynamicData": "{{$dynamicData}}"
+    },
+    "eventAppliedEntities": "{{$events}}"
+  },
+  "fields": [
+    { "label": "DireccionNueva", "sourceField": "direccion" },
+    { "label": "CanalAtencion", "sourceField": "canal", "defaultValue": "Web" },
+    { "label": "FechaSolicitud", "sourceField": "fechaSolicitud", "dataType": "date" }
+  ],
+  "events": ["RegistrarEndoso", "ValidarEndoso", "AprobarEndoso"]
+}
