@@ -20,7 +20,7 @@ docker compose up -d --build
 
 The UI is at <http://localhost:8080> (change it with `FRONTEND_PORT`). Migrations and seeding run on every start and are safe to repeat. Data lives in the `sqlite-data` volume and survives restarts and `docker compose down`. Only `docker compose down -v` deletes it. The API and database aren't published, and everything goes through the nginx proxy.
 
-Generate a development token (valid for one hour) and paste it into the UI:
+Generate a development token (valid for one hour, or set `TOKEN_TTL_SECONDS`) and paste it into the UI:
 
 ```bash
 docker compose exec backend node dist/scripts/generate-token.js
@@ -93,7 +93,7 @@ The next request can use it, with no rebuild or restart. A higher `version` for 
 | **API versioning** | `/api/v1` prefix in [`app.ts`](backend/src/app.ts) | Test that the unversioned path returns 404 |
 | **Unit tests** | [`backend/tests`](backend/tests): mapper, validators, and API tests on a real in-memory database | `npm test`, and on every PR through [CI](../.github/workflows/exercise-1-ci.yml) |
 | **Maintainability / SOLID** | Layers from the PDF; the service depends on `TemplateReader`; the mapper is pure; [ADRs](docs/adr/) | Code structure |
-| **Deployment** | Dockerfiles and Compose, non-root backend, health check, persistent volume. **Cloud deployment pending**: [ADR-004](docs/adr/004-deployment-target.md) | `docker compose up -d --build`, also smoke-tested in [CI](../.github/workflows/exercise-1-ci.yml) |
+| **Deployment** | Dockerfiles and Compose, non-root backend, health check, persistent volume. Live on a VPS, which isn't the free-tier cloud the PDF asks for: [ADR-004](docs/adr/004-deployment-target.md) | `docker compose up -d --build`, also smoke-tested in [CI](../.github/workflows/exercise-1-ci.yml) |
 | **Security** | JWT verified in the API (signature, issuer, audience, expiry), routes protected by default, secret from the environment | 401 tests |
 | **Frontend (Part 2)** | [React + Vite](frontend/src/App.tsx): edit by fields or JSON, PDF sample, JWT input, clear errors | Manual and scripted browser run |
 
@@ -118,7 +118,7 @@ Integration and Publisher aren't included, because this service neither calls ex
 
 ## Not production-ready
 
-- **Cloud deployment and TLS:** pending, see [ADR-004](docs/adr/004-deployment-target.md).
+- **Hosting:** a single shared VPS rather than the free-tier cloud the PDF asks for, see [ADR-004](docs/adr/004-deployment-target.md).
 - **Token issuing:** tokens come from a development script with a shared secret. Production needs an identity provider with client credentials and key rotation.
 - **Template management:** there's an import script, but no admin UI, approval flow or rollback command.
 - **Scale:** SQLite means a single instance, see [ADR-002](docs/adr/002-sqlite.md).

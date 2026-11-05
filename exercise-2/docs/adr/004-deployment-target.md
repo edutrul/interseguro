@@ -1,18 +1,18 @@
-# ADR-004: Deployment target — Cloud Run, not a VM
+# ADR-004: Deployment target
 
-**Status:** Accepted, with deployment pending
+**Status:** Accepted
 
 ## Context
-The PDF asks to Dockerize and pick a cloud with a free tier, preferably GCP or AWS. Exercise 1 picked a free-tier VM (see its ADR-004) because SQLite needs a persistent disk. This service has no database — per [ADR-003](003-graph-in-request-payload.md) the graph arrives in the request itself — so that constraint does not apply here.
+The PDF asks to Dockerize and pick a cloud with a free tier, preferably GCP or AWS. The demo had to be online quickly, and an existing Linux VPS with Docker, Caddy and HTTPS was already available.
 
 ## Decision
-Package with Docker Compose for local use, and deploy the backend and frontend containers to **Google Cloud Run** (free tier: 2 million requests/month, scales to zero) as the final step, rather than reusing exercise 1's VM.
+Deploy with Docker Compose to the existing VPS, behind its shared Caddy, at `interseguro.eduardotelaya.com`. Each exercise has its own path. No container publishes a host port. The [root README](../../../README.md#deployment) has the steps.
 
 ## Alternatives
-- **The same free-tier VM as exercise 1:** would work, but pays for idle capacity around the clock for a service that, being stateless, has no reason not to scale to zero between requests.
-- **AWS Fargate:** comparable managed-container fit, but its free tier is smaller and less friendly to a side-project deployment than Cloud Run's.
+- **Free-tier AWS or GCP VM:** meets the criterion as written, but needs a new account setup and more time. The same Compose files would run there.
+- **Managed containers (Cloud Run, Fargate):** less to operate, but their storage is temporary or needs a network filesystem, which doesn't suit SQLite in Exercise 1.
 
 ## Consequences
-- **The cloud part of the criterion isn't met until the deployment happens.**
-- Cloud Run terminates idle instances, so a cold start adds latency to the first request after a quiet period; acceptable for this exercise, worth a warm-up ping in a real deployment.
-- No TLS is configured in this repo; Cloud Run terminates TLS at its own edge, so a real deployment gets it for free, unlike exercise 1's bare VM.
+- **This is a deliberate deviation: the cloud part of the criterion isn't met.** Moving means repeating the root README's steps on a cloud VM and changing the DNS record.
+- A single server is a single point of failure, and it's shared with unrelated sites. That's acceptable for a demo only.
+- Tokens are signed with a shared secret by a development script, including the longer-lived demo tokens. Production needs an identity provider.

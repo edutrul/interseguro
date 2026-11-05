@@ -1,0 +1,22 @@
+interseguro.eduardotelaya.com {
+	redir /ejercicio-1 /ejercicio-1/
+	redir /ejercicio-2 /ejercicio-2/
+	redir /ejercicio-3 /ejercicio-3/
+
+	@home path /
+	handle @home {
+		reverse_proxy interseguro-home:8080
+	}
+	handle /ejercicio-3/* {
+		reverse_proxy interseguro-home:8080
+	}
+	handle_path /ejercicio-1/* {
+		reverse_proxy interseguro-ex1-web:8080
+	}
+	handle_path /ejercicio-2/* {
+		reverse_proxy interseguro-ex2-web:8080
+	}
+	handle {
+		respond 404
+	}
+}

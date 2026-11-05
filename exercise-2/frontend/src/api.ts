@@ -14,7 +14,7 @@ export type RouteOutcome =
   | { ok: true; body: OptimalRouteBody; requestId: string | null }
   | { ok: false; error: ApiError; requestId: string | null };
 
-const OPTIMAL_ROUTE_URL = '/api/v1/routes/optimal';
+const OPTIMAL_ROUTE_URL = `${import.meta.env.BASE_URL}api/v1/routes/optimal`;
 
 export async function findOptimalRoute(payload: unknown, token: string): Promise<RouteOutcome> {
   const response = await fetch(OPTIMAL_ROUTE_URL, {

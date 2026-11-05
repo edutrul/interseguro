@@ -6,6 +6,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -13,7 +15,19 @@ import (
 	"interseguro/exercise-2/backend/internal/config"
 )
 
-const devTokenTTL = time.Hour
+const defaultTokenTTL = time.Hour
+
+func tokenTTL() time.Duration {
+	raw := os.Getenv("TOKEN_TTL_SECONDS")
+	if raw == "" {
+		return defaultTokenTTL
+	}
+	seconds, err := strconv.Atoi(raw)
+	if err != nil || seconds <= 0 {
+		log.Fatalf("TOKEN_TTL_SECONDS must be a positive integer, got %q", raw)
+	}
+	return time.Duration(seconds) * time.Second
+}
 
 func main() {
 	cfg, err := config.Load()
@@ -27,7 +41,7 @@ func main() {
 		Audience:  jwt.ClaimStrings{cfg.JWT.Audience},
 		Subject:   "dev-client",
 		IssuedAt:  jwt.NewNumericDate(now),
-		ExpiresAt: jwt.NewNumericDate(now.Add(devTokenTTL)),
+		ExpiresAt: jwt.NewNumericDate(now.Add(tokenTTL())),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
