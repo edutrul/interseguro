@@ -8,7 +8,7 @@ What the PDF leaves open. Decisions we made on purpose are in [the ADRs](adr/).
 | **A-002 Service responsibility** | The translator transforms and returns JSON. It doesn't send anything to the core or execute endorsements. |
 | **A-003 Dynamic configuration** | Templates and their transformation rules are stored in SQLite. |
 | **A-004 External compatibility** | Internal code uses English. External field names follow the PDF exactly ([ADR-005](adr/005-keep-the-external-contract-verbatim.md)). |
-| **A-005 Deployment** | The PDF asks for a cloud with a free tier, preferably GCP or AWS. **That deployment isn't done yet**: it's planned as the last step, and today the stack runs locally with Docker Compose ([ADR-004](adr/004-deployment-target.md)). |
+| **A-005 Deployment** | The PDF asks for a cloud with a free tier, preferably GCP or AWS. The demo runs on an existing VPS instead, so that part of the criterion isn't met ([ADR-004](adr/004-deployment-target.md)). |
 | **A-006 Required fields** | The PDF doesn't say which fields are required. Every sample value that comes from the input is treated as required, because none shows a default. |
 | **A-007 Selectors** | `producto` and `tipoEndoso` choose the template and match exactly, including case. |
 | **A-008 Not sent** | Absent, `null` and blank (`""`, whitespace) input all count as not sent, so defaults apply and required fields fail. |

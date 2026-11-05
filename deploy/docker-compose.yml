@@ -1,0 +1,17 @@
+name: interseguro-home
+
+# Serves the landing page and the static Exercise 3 page.
+services:
+  web:
+    image: nginxinc/nginx-unprivileged:1.29-alpine
+    container_name: interseguro-home
+    restart: unless-stopped
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ../exercise-3/architecture-design.html:/usr/share/nginx/html/ejercicio-3/index.html:ro
+    networks:
+      - launchpad_edge
+
+networks:
+  launchpad_edge:
+    external: true
