@@ -1,0 +1,10 @@
+services:
+  frontend:
+    container_name: interseguro-ex2-web
+    ports: !reset []
+    networks:
+      - default
+      - launchpad_edge
+networks:
+  launchpad_edge:
+    external: true

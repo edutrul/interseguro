@@ -1,0 +1,32 @@
+name: interseguro-exercise-2
+
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in exercise-2/.env}
+      JWT_ISSUER: ${JWT_ISSUER:-tow-routing-service}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-tow-routing-clients}
+      PORT: "8080"
+    # No published ports: the API is reachable only through the frontend proxy.
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "/api", "--healthcheck"]
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        BASE_PATH: ${BASE_PATH:-/}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-8081}:8080"
