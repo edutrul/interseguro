@@ -17,7 +17,10 @@ services:
       - "3000"
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        BASE_PATH: ${BASE_PATH:-/}
     restart: unless-stopped
     depends_on:
       backend:

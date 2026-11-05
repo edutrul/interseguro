@@ -9,7 +9,7 @@ export type TranslateOutcome =
   | { ok: true; body: unknown; templateVersion: string | null; requestId: string | null }
   | { ok: false; error: ApiError; requestId: string | null };
 
-const TRANSLATE_URL = '/api/v1/endorse/translate';
+const TRANSLATE_URL = `${import.meta.env.BASE_URL}api/v1/endorse/translate`;
 
 export async function translate(payload: unknown, token: string): Promise<TranslateOutcome> {
   const response = await fetch(TRANSLATE_URL, {
