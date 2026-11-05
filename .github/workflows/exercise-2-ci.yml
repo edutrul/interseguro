@@ -1,0 +1,79 @@
+name: Exercise 2 CI
+
+on:
+  pull_request:
+    paths:
+      - "exercise-2/**"
+      - ".github/workflows/exercise-2-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "exercise-2/**"
+      - ".github/workflows/exercise-2-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: exercise-2/backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: exercise-2/backend/go.mod
+          cache-dependency-path: exercise-2/backend/go.sum
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: go build ./...
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: exercise-2/frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: exercise-2/frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+
+  docker-smoke-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: exercise-2
+    steps:
+      - uses: actions/checkout@v7
+      - name: Create .env
+        run: |
+          [ -f .env ] || sed "s|^JWT_SECRET=.*|JWT_SECRET=$(openssl rand -hex 32)|" .env.example > .env
+      - name: Start the stack
+        run: docker compose up -d --build --wait --wait-timeout 120
+      - name: Reject a request without a token
+        run: |
+          status=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8081/api/v1/routes/optimal \
+            -H 'Content-Type: application/json' -d '{}')
+          echo "status: $status"
+          test "$status" = "401"
+      - name: Match the PDF output with a token
+        run: |
+          token=$(docker compose exec -T backend /gentoken)
+          output=$(curl -sf -X POST http://localhost:8081/api/v1/routes/optimal \
+            -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+            -d '{"accidentLocation":"San Isidro","depots":["Miraflores","Ate"],"graph":{"Miraflores":{"San Isidro":7,"Barranco":3},"San Isidro":{"Miraflores":7,"Lince":4},"Barranco":{"Miraflores":3,"Surco":5},"Lince":{"San Isidro":4,"Surco":6},"Surco":{"Barranco":5,"Lince":6,"Ate":10},"Ate":{"Surco":10}}}')
+          echo "$output"
+          test "$output" = '{"fromDepot":"Miraflores","to":"San Isidro","path":["Miraflores","San Isidro"],"distance":7}'
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+      - name: Stop the stack
+        if: always()
+        run: docker compose down -v
