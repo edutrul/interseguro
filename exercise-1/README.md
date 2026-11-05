@@ -113,8 +113,6 @@ Integration and Publisher aren't included, because this service neither calls ex
 
 ## Decisions and assumptions
 
-- [Architecture diagrams](docs/architecture.md): layers, a request end to end, and adding a product
-- [Database model and ER diagram](docs/database-model.md)
 - [Assumptions](docs/assumptions.md)
 - ADRs: [001 Rows plus skeleton](docs/adr/001-relational-rows-plus-json-skeleton.md), [002 SQLite](docs/adr/002-sqlite.md), [003 Versioned templates](docs/adr/003-versioned-templates.md), [004 Deployment](docs/adr/004-deployment-target.md), [005 External contract](docs/adr/005-keep-the-external-contract-verbatim.md)
 
