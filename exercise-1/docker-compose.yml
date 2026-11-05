@@ -1,0 +1,29 @@
+name: interseguro-exercise-1
+
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in exercise-1/.env}
+      JWT_ISSUER: ${JWT_ISSUER:-endorsement-translator}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-endorsement-clients}
+      DATABASE_PATH: /data/endorsements.sqlite
+      TEMPLATES_DIR: /app/templates
+    volumes:
+      - sqlite-data:/data
+    # No published ports: the API and the database are reachable only through the frontend proxy.
+    expose:
+      - "3000"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-8080}:8080"
+
+volumes:
+  sqlite-data:
