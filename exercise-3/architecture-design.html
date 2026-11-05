@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Préstamos de Renta Particular — Diseño de Arquitectura</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a1a;
+    --muted: #555;
+    --border: #d9d9d9;
+    --card-bg: #fafafa;
+    --accent: #1a73e8;
+    --danger: #c0392b;
+    --danger-bg: #fdecea;
+    --ok-bg: #eaf6ec;
+    --ok-border: #2e7d32;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121212;
+      --fg: #e6e6e6;
+      --muted: #aaa;
+      --border: #333;
+      --card-bg: #1b1b1b;
+      --accent: #8ab4f8;
+      --danger: #f28b82;
+      --danger-bg: #3a1f1d;
+      --ok-bg: #16281a;
+      --ok-border: #4caf50;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121212;
+    --fg: #e6e6e6;
+    --muted: #aaa;
+    --border: #333;
+    --card-bg: #1b1b1b;
+    --accent: #8ab4f8;
+    --danger: #f28b82;
+    --danger-bg: #3a1f1d;
+    --ok-bg: #16281a;
+    --ok-border: #4caf50;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.55;
+  }
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 32px 16px 80px;
+  }
+  h1 {
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+  }
+  h2 {
+    font-size: 1.15rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin-top: 48px;
+  }
+  .subtitle {
+    color: var(--muted);
+    margin-top: 0;
+    margin-bottom: 32px;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 16px 0;
+  }
+  .card.danger {
+    background: var(--danger-bg);
+    border-color: var(--danger);
+  }
+  .card.ok {
+    background: var(--ok-bg);
+    border-color: var(--ok-border);
+  }
+  .card h3 {
+    margin-top: 0;
+    font-size: 1rem;
+  }
+  ul {
+    margin: 8px 0;
+    padding-left: 20px;
+  }
+  li {
+    margin: 4px 0;
+  }
+  .diagram-wrapper {
+    position: relative;
+    margin: 16px 0;
+  }
+  .diagram-toolbar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    display: flex;
+    gap: 4px;
+  }
+  .diagram-toolbar button {
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--fg);
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+  .diagram-toolbar button:hover {
+    background: var(--card-bg);
+    border-color: var(--accent);
+  }
+  .diagram {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    background: var(--card-bg);
+    height: 460px;
+    touch-action: none;
+  }
+  .diagram svg {
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+  }
+  .diagram svg:active {
+    cursor: grabbing;
+  }
+  .diagram-wrapper:fullscreen {
+    display: flex;
+    background: var(--bg);
+    padding: 16px;
+  }
+  .diagram-wrapper:fullscreen .diagram {
+    flex: 1;
+    height: auto;
+    border-radius: 0;
+  }
+  .diagram-wrapper:-webkit-full-screen {
+    display: flex;
+    background: var(--bg);
+    padding: 16px;
+  }
+  .diagram-wrapper:-webkit-full-screen .diagram {
+    flex: 1;
+    height: auto;
+    border-radius: 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.92rem;
+    vertical-align: top;
+  }
+  th {
+    color: var(--muted);
+    font-weight: 600;
+  }
+  code {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 0.9em;
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>Préstamos de Renta Particular</h1>
+  <p class="subtitle">Diagnóstico del problema (AS-IS) y propuesta de arquitectura (TO-BE)</p>
+
+  <h2>1. El problema</h2>
+
+  <p>
+    El cliente solicita un desembolso desde la Zona Segura. La solicitud viaja de forma
+    <strong>síncrona</strong> a través del backend Node hasta <strong>admwr-api</strong>, un
+    sistema legado (.NET Forms) dentro de la red privada IS-VCE, detrás del proxy de INARI.
+  </p>
+
+  <div class="card danger">
+    <h3>Síntoma observado</h3>
+    <ul>
+      <li>El proxy de INARI responde <code>502 Bad Gateway</code> cuando detecta lentitud o timeout.</li>
+      <li><strong>admwr-api sigue procesando en segundo plano</strong> y muchas veces termina ejecutando el desembolso con éxito, aunque el cliente ya recibió un error.</li>
+      <li>El cliente, al ver el error, reintenta manualmente → se genera un <strong>segundo desembolso para el mismo préstamo</strong>.</li>
+    </ul>
+  </div>
+
+  <div class="diagram-wrapper" id="diagram-as-is">
+    <div class="diagram-toolbar">
+      <button type="button" data-action="zoom-in" title="Acercar" aria-label="Acercar">+</button>
+      <button type="button" data-action="zoom-out" title="Alejar" aria-label="Alejar">−</button>
+      <button type="button" data-action="reset" title="Restablecer zoom" aria-label="Restablecer zoom">⟳</button>
+      <button type="button" data-action="fullscreen" title="Pantalla completa" aria-label="Pantalla completa">⛶</button>
+    </div>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TB
+    Cliente["Cliente de Renta Particular"]
+    Proxy["Proxy"]
+    FE["zona-segura-frontend<br/>(Cloud Run)"]
+    BE["zona-segura-backend<br/>(Node, Cloud Run)"]
+    PortalDB[("portal-db<br/>Compute Engine")]
+    INARI_PROXY["Proxy INARI<br/>(VMWARE INARI)"]
+    ADMWR_API["admwr-api<br/>.NET Forms"]
+    ADMWR_DB[("admwr<br/>SQL Server")]
+    ULTIMUS["ultimus-api"]
+    SFTP["SFTP<br/>tramas ASBANC"]
+    Bancos["Bancos<br/>BBVA / BCP / IBK / Scotia"]
+
+    Cliente -->|"1 . Solicita prestamo"| Proxy
+    Proxy --> FE
+    FE -->|"2 . Registrar prestamo sincrono"| BE
+    BE -->|"3 . Guardar evento / cronograma"| PortalDB
+    BE -->|"4 . Enviar cronograma, espera respuesta"| INARI_PROXY
+    INARI_PROXY -->|"5 . Forward"| ADMWR_API
+    ADMWR_API --> ADMWR_DB
+    ADMWR_API --> ULTIMUS
+    ULTIMUS --> SFTP
+    SFTP --> Bancos
+
+    ADMWR_API -. "6 . sigue ejecutando aunque haya timeout" .-> ADMWR_DB
+    INARI_PROXY -. "X 502 Bad Gateway timeout" .-> BE
+    BE -. "X cliente ve error" .-> FE
+    FE -. "X reintento manual = nuevo desembolso" .-> BE
+
+    classDef fail stroke:#c0392b,stroke-width:2px,stroke-dasharray: 4 3,color:#c0392b;
+    class ADMWR_API,INARI_PROXY fail;
+    </pre>
+  </div>
+  </div>
+
+  <h3>Causa raíz</h3>
+  <p>El <code>502</code> es el síntoma, no la causa. El problema real combina tres cosas:</p>
+  <table>
+    <tr><th>#</th><th>Causa</th><th>Efecto</th></tr>
+    <tr>
+      <td>1</td>
+      <td>El timeout del proxy no está alineado con la duración real del proceso en <code>admwr</code></td>
+      <td>El proxy corta la conexión, pero el backend no se entera y sigue ejecutando (fire-and-forget accidental)</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>No existe idempotencia en la solicitud de desembolso</td>
+      <td>No hay forma de reconocer "esta ya es la segunda vez que me piden lo mismo"</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>El cliente usa un error de transporte como señal de negocio</td>
+      <td>Reintenta manualmente sin control de concurrencia → desembolso duplicado</td>
+    </tr>
+  </table>
+
+  <h2>2. La solución</h2>
+
+  <p>
+    La idea central: <strong>el cliente nunca espera a INARI</strong>. Se introduce una capa de
+    orquestación asíncrona con idempotencia y control de concurrencia entre la Zona Segura y el
+    sistema legado.
+  </p>
+
+  <div class="card ok">
+    <h3>Qué resuelve cada pieza nueva</h3>
+    <ul>
+      <li><strong>202 inmediato + polling/estado:</strong> rompe el acoplamiento síncrono cliente-INARI.</li>
+      <li><strong>Idempotency-Key:</strong> un reintento del cliente no genera una segunda operación real.</li>
+      <li><strong>Lock por póliza:</strong> impide que dos mensajes para la misma póliza se procesen en paralelo.</li>
+      <li><strong>Cola con reintentos controlados:</strong> solo reintenta si la operación sigue pendiente, nunca a ciegas.</li>
+      <li><strong>Job de reconciliación:</strong> detecta operaciones "huérfanas" (admwr ejecutó, pero la confirmación no volvió) sin que el cliente lo note.</li>
+    </ul>
+  </div>
+
+  <div class="diagram-wrapper" id="diagram-to-be">
+    <div class="diagram-toolbar">
+      <button type="button" data-action="zoom-in" title="Acercar" aria-label="Acercar">+</button>
+      <button type="button" data-action="zoom-out" title="Alejar" aria-label="Alejar">−</button>
+      <button type="button" data-action="reset" title="Restablecer zoom" aria-label="Restablecer zoom">⟳</button>
+      <button type="button" data-action="fullscreen" title="Pantalla completa" aria-label="Pantalla completa">⛶</button>
+    </div>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TB
+    Cliente["Cliente de Renta Particular"]
+
+    subgraph ZS["Zona Segura (Interseguro Zona Privada)"]
+        FE["zona-segura-frontend<br/>(Cloud Run)"]
+        BE["zona-segura-backend<br/>(Node, Cloud Run)"]
+        PDB[("portal-db<br/>solicitudes + estado")]
+    end
+
+    subgraph NEW["GCP-MVP - Capa nueva de orquestacion"]
+        Q["Cola<br/>Pub/Sub o Cloud Tasks"]
+        WRK["Worker orquestador<br/>idempotencia + estado"]
+        LOCK[("Lock por poliza<br/>Memorystore/Redis")]
+        RECON["Job de reconciliacion<br/>detecta huerfanas"]
+    end
+
+    subgraph VCE["IS-VCE (red privada, legado)"]
+        ADMWR_API["admwr-api<br/>.NET Forms (INARI)"]
+        ADMWR_DB[("admwr<br/>SQL Server")]
+        ULTIMUS["ultimus-api"]
+        SFTP["SFTP tramas ASBANC"]
+    end
+
+    Bancos["Bancos<br/>BBVA / BCP / IBK / Scotia"]
+
+    Cliente -->|"1 . Solicita prestamo"| FE
+    FE -->|"2 . POST + Idempotency-Key"| BE
+    BE -->|"3 . Persiste PENDIENTE"| PDB
+    BE -->|"4 . 202 Accepted + trackingId"| FE
+    FE -->|"5 . Polling / WS estado"| BE
+
+    BE -->|"6 . Encola mensaje"| Q
+    Q --> WRK
+
+    WRK -->|"7 . Adquiere lock por poliza"| LOCK
+    WRK -->|"8 . Verifica estado previo"| PDB
+    WRK -->|"9 . Invoca desembolso si no hay duplicado"| ADMWR_API
+
+    ADMWR_API --> ADMWR_DB
+    ADMWR_API --> ULTIMUS
+    ULTIMUS --> SFTP
+    SFTP --> Bancos
+
+    ADMWR_API -->|"10 . Resultado"| WRK
+    WRK -->|"11 . Actualiza estado final"| PDB
+    WRK -->|"12 . Libera lock"| LOCK
+
+    RECON -. "revisa PENDIENTE mayor a umbral" .-> PDB
+    RECON -. "consulta estado real" .-> ADMWR_API
+
+    classDef newc stroke:#2e7d32,stroke-width:2px,color:#2e7d32;
+    class Q,WRK,LOCK,RECON newc;
+    </pre>
+  </div>
+  </div>
+
+  <h2>3. Cómo se mapea contra los criterios del reto</h2>
+  <table>
+    <tr><th>Criterio</th><th>Cómo lo cubre el diseño</th></tr>
+    <tr><td>Escalabilidad</td><td>Cola + worker stateless en Cloud Run, escalan independiente del legado</td></tr>
+    <tr><td>Resiliencia y reintentos</td><td>Reintentos con backoff solo mientras la operación siga pendiente, nunca a ciegas</td></tr>
+    <tr><td>Control de concurrencia</td><td>Idempotency-Key + lock por póliza + estado persistido antes de invocar admwr</td></tr>
+    <tr><td>Seguridad</td><td>Mismo perímetro ya existente (Zona Segura, red privada IS-VCE) + JWT/mTLS en componentes nuevos</td></tr>
+    <tr><td>Costo</td><td>Servicios managed de bajo costo (Pub/Sub o Cloud Tasks, Memorystore) sobre infraestructura GCP ya existente</td></tr>
+  </table>
+
+</main>
+
+<script>
+  function applyMermaidTheme() {
+    var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    mermaid.initialize({ startOnLoad: false, theme: dark ? "dark" : "default", securityLevel: "strict" });
+  }
+
+  function setupDiagram(wrapper) {
+    var diagram = wrapper.querySelector(".diagram");
+    var svg = diagram.querySelector("svg");
+    if (!svg || !window.Panzoom) return;
+
+    svg.removeAttribute("height");
+    svg.removeAttribute("width");
+
+    var panzoom = Panzoom(svg, { maxScale: 8, minScale: 0.4, contain: "outside", canvas: true });
+    diagram.addEventListener("wheel", panzoom.zoomWithWheel);
+
+    var zoomIn = wrapper.querySelector('[data-action="zoom-in"]');
+    var zoomOut = wrapper.querySelector('[data-action="zoom-out"]');
+    var reset = wrapper.querySelector('[data-action="reset"]');
+    var fullscreenBtn = wrapper.querySelector('[data-action="fullscreen"]');
+
+    if (zoomIn) zoomIn.addEventListener("click", function () { panzoom.zoomIn(); });
+    if (zoomOut) zoomOut.addEventListener("click", function () { panzoom.zoomOut(); });
+    if (reset) reset.addEventListener("click", function () { panzoom.reset(); });
+
+    if (fullscreenBtn) {
+      fullscreenBtn.addEventListener("click", function () {
+        try {
+          var isFs = document.fullscreenElement || document.webkitFullscreenElement;
+          if (!isFs) {
+            if (wrapper.requestFullscreen) wrapper.requestFullscreen();
+            else if (wrapper.webkitRequestFullscreen) wrapper.webkitRequestFullscreen();
+          } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+          }
+        } catch (e) { /* Fullscreen API unavailable; buttons simply no-op */ }
+      });
+    }
+
+    ["fullscreenchange", "webkitfullscreenchange"].forEach(function (evt) {
+      wrapper.addEventListener(evt, function () { panzoom.reset(); });
+    });
+  }
+
+  applyMermaidTheme();
+  mermaid.run({ querySelector: ".mermaid" }).then(function () {
+    document.querySelectorAll(".diagram-wrapper").forEach(setupDiagram);
+  });
+</script>
+
+</body>
+</html>
