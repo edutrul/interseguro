@@ -1,0 +1,46 @@
+{
+  "productCode": "Rumbo",
+  "endorsementType": "CambioFrecuencia",
+  "version": 1,
+  "outputSkeleton": {
+    "policyNumber": "{{policyNumber|string}}",
+    "idEnvio": "{{idEnvio|number}}",
+    "financialPlansEntity": { "description": "{{frecuencia|string}}" },
+    "currency": { "description": "{{moneda|string}}" },
+    "productEntity": { "description": "{{producto|string}}" },
+    "eventEntity": {
+      "description": "SolicitarEndoso",
+      "dynamicData": "{{$dynamicData}}"
+    },
+    "eventAppliedEntities": "{{$events}}",
+    "riskUnitEntities": [
+      {
+        "insuranceObjectEntities": [
+          {
+            "insuranceObjectNumber": "1",
+            "coverageEntities": [],
+            "participationEntities": []
+          }
+        ],
+        "plansEntity": { "description": "{{plan|string}}" },
+        "riskUnitNumber": "1"
+      }
+    ],
+    "participationEntities": []
+  },
+  "fields": [
+    { "label": "ProductosVida", "sourceField": "producto" },
+    { "label": "NombreUsuario", "sourceField": "usuario" },
+    { "label": "NumeroPolizaEndoso", "sourceField": "policyNumber" },
+    { "label": "TipoEndosoPol", "defaultValue": "Endoso Simple" },
+    { "label": "ResponsableAtencion", "defaultValue": "SAC" },
+    { "label": "EndosoModifPrima", "defaultValue": "Si" },
+    { "label": "InicioVigenciaEndoso", "defaultValue": "Default" },
+    { "label": "TipoVigenciaEndoso", "defaultValue": "" },
+    { "label": "EndososSimplesSACRumbo", "defaultValue": "TES008" },
+    { "label": "FechaSolicitud", "sourceField": "fechaSolicitud", "dataType": "date" },
+    { "label": "FechaCliente", "sourceField": "fechaCliente", "dataType": "date" },
+    { "label": "FechaEfectiva", "sourceField": "fechaEfectiva", "dataType": "date" }
+  ],
+  "events": ["SolicitarEndoso", "AprobarEndoso"]
+}
